@@ -32,9 +32,9 @@ typedef enum {
 	GIT_DIRECTION_PUSH  = 1
 } git_direction;
 
+
 /**
- * Description of a reference advertised by a remote server, given out
- * on `ls` calls.
+ * Remote head description, given out on `ls` calls.
  */
 struct git_remote_head {
 	int local; /* available locally */

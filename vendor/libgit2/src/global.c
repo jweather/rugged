@@ -9,7 +9,6 @@
 #include "hash.h"
 #include "sysdir.h"
 #include "git2/threads.h"
-#include "git2/global.h"
 #include "thread-utils.h"
 
 
@@ -64,69 +63,43 @@ void openssl_locking_function(int mode, int n, const char *file, int line)
 		git_mutex_unlock(&openssl_locks[n]);
 	}
 }
-
-static void shutdown_ssl_locking(void)
-{
-	CRYPTO_set_locking_callback(NULL);
-	git__free(openssl_locks);
-}
 #endif
+
 
 static void init_ssl(void)
 {
 #ifdef GIT_SSL
-	long ssl_opts = SSL_OP_NO_SSLv2 | SSL_OP_NO_SSLv3;
-
-	/* Older OpenSSL and MacOS OpenSSL doesn't have this */
-#ifdef SSL_OP_NO_COMPRESSION
-	ssl_opts |= SSL_OP_NO_COMPRESSION;
-#endif
-
 	SSL_load_error_strings();
 	OpenSSL_add_ssl_algorithms();
-	/*
-	 * Load SSLv{2,3} and TLSv1 so that we can talk with servers
-	 * which use the SSL hellos, which are often used for
-	 * compatibility. We then disable SSL so we only allow OpenSSL
-	 * to speak TLSv1 to perform the encryption itself.
-	 */
 	git__ssl_ctx = SSL_CTX_new(SSLv23_method());
-	SSL_CTX_set_options(git__ssl_ctx, ssl_opts);
 	SSL_CTX_set_mode(git__ssl_ctx, SSL_MODE_AUTO_RETRY);
 	SSL_CTX_set_verify(git__ssl_ctx, SSL_VERIFY_NONE, NULL);
 	if (!SSL_CTX_set_default_verify_paths(git__ssl_ctx)) {
 		SSL_CTX_free(git__ssl_ctx);
 		git__ssl_ctx = NULL;
 	}
-#endif
-}
 
-int git_openssl_set_locking(void)
-{
-#ifdef GIT_SSL
 # ifdef GIT_THREADS
-	int num_locks, i;
+	{
+		int num_locks, i;
 
-	num_locks = CRYPTO_num_locks();
-	openssl_locks = git__calloc(num_locks, sizeof(git_mutex));
-	GITERR_CHECK_ALLOC(openssl_locks);
-
-	for (i = 0; i < num_locks; i++) {
-		if (git_mutex_init(&openssl_locks[i]) != 0) {
-			giterr_set(GITERR_SSL, "failed to initialize openssl locks");
-			return -1;
+		num_locks = CRYPTO_num_locks();
+		openssl_locks = git__calloc(num_locks, sizeof(git_mutex));
+		if (openssl_locks == NULL) {
+			SSL_CTX_free(git__ssl_ctx);
+			git__ssl_ctx = NULL;
 		}
-	}
 
-	CRYPTO_set_locking_callback(openssl_locking_function);
-	git__on_shutdown(shutdown_ssl_locking);
-	return 0;
-# else
-	giterr_set(GITERR_THREAD, "libgit2 as not built with threads");
-	return -1;
+		for (i = 0; i < num_locks; i++) {
+			if (git_mutex_init(&openssl_locks[i]) != 0) {
+				SSL_CTX_free(git__ssl_ctx);
+				git__ssl_ctx = NULL;
+			}
+		}
+
+		CRYPTO_set_locking_callback(openssl_locking_function);
+	}
 # endif
-	giterr_set(GITERR_SSL, "libgit2 was not built with OpenSSL support");
-	return -1;
 #endif
 }
 
@@ -134,7 +107,7 @@ int git_openssl_set_locking(void)
  * Handle the global state with TLS
  *
  * If libgit2 is built with GIT_THREADS enabled,
- * the `git_libgit2_init()` function must be called
+ * the `git_threads_init()` function must be called
  * before calling any other function of the library.
  *
  * This function allocates a TLS index (using pthreads
@@ -147,7 +120,7 @@ int git_openssl_set_locking(void)
  * allocated on each thread.
  *
  * Before shutting down the library, the
- * `git_libgit2_shutdown` method must be called to free
+ * `git_threads_shutdown` method must be called to free
  * the previously reserved TLS index.
  *
  * If libgit2 is built without threading support, the
@@ -157,9 +130,9 @@ int git_openssl_set_locking(void)
  */
 
 /*
- * `git_libgit2_init()` allows subsystems to perform global setup,
+ * `git_threads_init()` allows subsystems to perform global setup,
  * which may take place in the global scope.  An explicit memory
- * fence exists at the exit of `git_libgit2_init()`.  Without this,
+ * fence exists at the exit of `git_threads_init()`.  Without this,
  * CPU cores are free to reorder cache invalidation of `_tls_init`
  * before cache invalidation of the subsystems' newly written global
  * state.
@@ -186,7 +159,7 @@ static int synchronized_threads_init(void)
 	return error;
 }
 
-int git_libgit2_init(void)
+int git_threads_init(void)
 {
 	int error = 0;
 
@@ -211,7 +184,7 @@ static void synchronized_threads_shutdown(void)
 	git_mutex_free(&git__mwindow_mutex);
 }
 
-void git_libgit2_shutdown(void)
+void git_threads_shutdown(void)
 {
 	/* Enter the lock */
 	while (InterlockedCompareExchange(&_mutex, 1, 0)) { Sleep(0); }
@@ -273,14 +246,14 @@ static void init_once(void)
 	GIT_MEMORY_BARRIER;
 }
 
-int git_libgit2_init(void)
+int git_threads_init(void)
 {
 	pthread_once(&_once_init, init_once);
 	git_atomic_inc(&git__n_inits);
 	return init_error;
 }
 
-void git_libgit2_shutdown(void)
+void git_threads_shutdown(void)
 {
 	void *ptr = NULL;
 	pthread_once_t new_once = PTHREAD_ONCE_INIT;
@@ -321,7 +294,7 @@ git_global_st *git__global_state(void)
 
 static git_global_st __state;
 
-int git_libgit2_init(void)
+int git_threads_init(void)
 {
 	static int ssl_inited = 0;
 
@@ -334,7 +307,7 @@ int git_libgit2_init(void)
 	return 0;
 }
 
-void git_libgit2_shutdown(void)
+void git_threads_shutdown(void)
 {
 	/* Shut down any subsystems that have global state */
 	if (0 == git_atomic_dec(&git__n_inits))

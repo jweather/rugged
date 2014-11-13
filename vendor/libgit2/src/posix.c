@@ -206,11 +206,10 @@ int p_write(git_file fd, const void *buf, size_t cnt)
 
 #include "map.h"
 
-int git__page_size(size_t *page_size)
+long git__page_size(void)
 {
 	/* dummy; here we don't need any alignment anyway */
-	*page_size = 4096;
-	return 0;
+	return 4096;
 }
 
 

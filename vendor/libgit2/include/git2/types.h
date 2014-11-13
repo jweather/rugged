@@ -174,8 +174,8 @@ typedef struct git_reference_iterator  git_reference_iterator;
 /** Transactional interface to references */
 typedef struct git_transaction git_transaction;
 
-/** Annotated commits, the input to merge and rebase. */
-typedef struct git_annotated_commit git_annotated_commit;
+/** Merge heads, the input to merge */
+typedef struct git_merge_head git_merge_head;
 
 /** Merge result */
 typedef struct git_merge_result git_merge_result;
@@ -183,8 +183,6 @@ typedef struct git_merge_result git_merge_result;
 /** Representation of a status collection */
 typedef struct git_status_list git_status_list;
 
-/** Representation of a rebase */
-typedef struct git_rebase git_rebase;
 
 /** Basic type of any Git reference. */
 typedef enum {
@@ -211,25 +209,10 @@ typedef enum {
 	GIT_FILEMODE_COMMIT              = 0160000,
 } git_filemode_t;
 
-/*
- * A refspec specifies the mapping between remote and local reference
- * names when fetch or pushing.
- */
 typedef struct git_refspec git_refspec;
-
-/**
- * Git's idea of a remote repository. A remote can be anonymous (in
- * which case it does not have backing configuration entires).
- */
 typedef struct git_remote git_remote;
-
-/**
- * Preparation for a push operation. Can be used to configure what to
- * push and the level of parallelism of the packfile builder.
- */
 typedef struct git_push git_push;
 
-/* documentation in the definition */
 typedef struct git_remote_head git_remote_head;
 typedef struct git_remote_callbacks git_remote_callbacks;
 

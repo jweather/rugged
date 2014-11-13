@@ -406,9 +406,8 @@ int git_tag_delete(git_repository *repo, const char *tag_name)
 	if (error < 0)
 		return error;
 
-	error = git_reference_delete(tag_ref);
-
-	git_reference_free(tag_ref);
+	if ((error = git_reference_delete(tag_ref)) == 0)
+		git_reference_free(tag_ref);
 
 	return error;
 }

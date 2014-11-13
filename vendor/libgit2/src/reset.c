@@ -101,7 +101,7 @@ int git_reset(
 	git_object *target,
 	git_reset_t reset_type,
 	git_checkout_options *checkout_opts,
-	const git_signature *signature,
+	git_signature *signature,
 	const char *log_message)
 {
 	git_object *commit = NULL;

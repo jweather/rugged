@@ -195,7 +195,9 @@ void test_status_worktree_init__bracket_in_filename(void)
 	cl_git_pass(git_status_file(&status_flags, repo, "LICENSE\\[1\\].md"));
 	cl_assert(status_flags == GIT_STATUS_INDEX_NEW);
 
-	cl_git_pass(git_status_file(&status_flags, repo, FILE_WITH_BRACKET));
+	error = git_status_file(&status_flags, repo, FILE_WITH_BRACKET);
+	cl_git_fail(error);
+	cl_assert_equal_i(GIT_EAMBIGUOUS, error);
 
 	git_index_free(index);
 	git_repository_free(repo);

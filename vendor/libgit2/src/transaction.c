@@ -274,7 +274,7 @@ static int update_target(git_refdb *db, transaction_node *node)
 	} else if (node->ref_type == GIT_REF_SYMBOLIC) {
 		ref = git_reference__alloc_symbolic(node->name, node->target.symbolic);
 	} else {
-		abort();
+		assert(0);
 	}
 
 	GITERR_CHECK_ALLOC(ref);
@@ -287,7 +287,7 @@ static int update_target(git_refdb *db, transaction_node *node)
 	} else if (node->ref_type == GIT_REF_SYMBOLIC) {
 		error = git_refdb_unlock(db, node->payload, true, update_reflog, ref, node->sig, node->message);
 	} else {
-		abort();
+		assert(0);
 	}
 
 	git_reference_free(ref);
@@ -300,7 +300,7 @@ int git_transaction_commit(git_transaction *tx)
 {
 	transaction_node *node;
 	git_strmap_iter pos;
-	int error = 0;
+	int error;
 
 	assert(tx);
 

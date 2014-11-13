@@ -1,5 +1,4 @@
 #include "pool.h"
-#include "posix.h"
 #ifndef GIT_WIN32
 #include <unistd.h>
 #endif
@@ -306,10 +305,17 @@ uint32_t git_pool__system_page_size(void)
 	static uint32_t size = 0;
 
 	if (!size) {
-		size_t page_size;
-		if (git__page_size(&page_size) < 0)
-			page_size = 4096;
-		size = page_size - 2 * sizeof(void *); /* allow space for malloc overhead */
+#ifdef GIT_WIN32
+		SYSTEM_INFO info;
+		GetSystemInfo(&info);
+		size = (uint32_t)info.dwPageSize;
+#elif defined(__amigaos4__)
+		size = (uint32_t)4096; /* 4K as there is no global value we can query */
+#else
+		size = (uint32_t)sysconf(_SC_PAGE_SIZE);
+#endif
+
+		size -= 2 * sizeof(void *); /* allow space for malloc overhead */
 	}
 
 	return size;

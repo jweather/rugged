@@ -23,7 +23,7 @@ int main (int argc, char** argv)
 	char out[GIT_OID_HEXSZ+1];
 	out[GIT_OID_HEXSZ] = '\0';
 
-	git_libgit2_init();
+	git_threads_init();
 
 	if (argc > 2)
 		fatal("usage: showindex [<repo-dir>]", NULL);
@@ -64,7 +64,7 @@ int main (int argc, char** argv)
 	}
 
 	git_index_free(index);
-	git_libgit2_shutdown();
+	git_threads_shutdown();
 
 	return 0;
 }

@@ -347,21 +347,6 @@ bool git_attr_fnmatch__match(
 	const char *filename;
 	int flags = 0;
 
-	/*
-	 * If the rule was generated in a subdirectory, we must only
-	 * use it for paths inside that directory. We can thus return
-	 * a non-match if the prefixes don't match.
-	 */
-	if (match->containing_dir) {
-		if (match->flags & GIT_ATTR_FNMATCH_ICASE) {
-			if (git__strncasecmp(path->path, match->containing_dir, match->containing_dir_length))
-				return 0;
-		} else {
-			if (git__prefixcmp(path->path, match->containing_dir))
-				return 0;
-		}
-	}
-
 	if (match->flags & GIT_ATTR_FNMATCH_ICASE)
 		flags |= FNM_CASEFOLD;
 	if (match->flags & GIT_ATTR_FNMATCH_LEADINGDIR)
@@ -558,7 +543,7 @@ int git_attr_fnmatch__parse(
 	for (scan = pattern; *scan != '\0'; ++scan) {
 		/* scan until (non-escaped) white space */
 		if (git__isspace(*scan) && *(scan - 1) != '\\') {
-			if (!allow_space || (*scan != ' ' && *scan != '\t' && *scan != '\r'))
+			if (!allow_space || (*scan != ' ' && *scan != '\t'))
 				break;
 		}
 
@@ -579,15 +564,6 @@ int git_attr_fnmatch__parse(
 	if ((spec->length = scan - pattern) == 0)
 		return GIT_ENOTFOUND;
 
-	/*
-	 * Remove one trailing \r in case this is a CRLF delimited
-	 * file, in the case of Icon\r\r\n, we still leave the first
-	 * \r there to match against.
-	 */
-	if (pattern[spec->length - 1] == '\r')
-		if (--spec->length == 0)
-			return GIT_ENOTFOUND;
-
 	if (pattern[spec->length - 1] == '/') {
 		spec->length--;
 		spec->flags = spec->flags | GIT_ATTR_FNMATCH_DIRECTORY;
@@ -601,17 +577,6 @@ int git_attr_fnmatch__parse(
 		spec->length -= 2;
 		spec->flags = spec->flags | GIT_ATTR_FNMATCH_LEADINGDIR;
 		/* leave FULLPATH match on, however */
-	}
-
-	if (context) {
-		char *slash = strchr(context, '/');
-		size_t len;
-		if (slash) {
-			/* include the slash for easier matching */
-			len = slash - context + 1;
-			spec->containing_dir = git_pool_strndup(pool, context, len);
-			spec->containing_dir_length = len;
-		}
 	}
 
 	if ((spec->flags & GIT_ATTR_FNMATCH_FULLPATH) != 0 &&

@@ -429,21 +429,17 @@ static void hash_partially(git_indexer *idx, const uint8_t *data, size_t size)
 static int write_at(git_indexer *idx, const void *data, git_off_t offset, size_t size)
 {
 	git_file fd = idx->pack->mwf.fd;
-	size_t page_size;
-	size_t page_offset;
-	git_off_t page_start;
+	long page_size = git__page_size();
+	git_off_t page_start, page_offset;
 	unsigned char *map_data;
 	git_map map;
 	int error;
 
 	assert(data && size);
 
-	if ((error = git__page_size(&page_size)) < 0)
-		return error;
-
 	/* the offset needs to be at the beginning of the a page boundary */
-	page_offset = offset % page_size;
-	page_start = offset - page_offset;
+	page_start = (offset / page_size) * page_size;
+	page_offset = offset - page_start;
 
 	if ((error = p_mmap(&map, page_offset + size, GIT_PROT_WRITE, GIT_MAP_SHARED, fd, page_start)) < 0)
 		return error;

@@ -40,7 +40,7 @@ int main (int argc, char** argv)
 	int options = 0, count = 0;
 	struct print_payload payload = {0};
 
-	git_libgit2_init();
+	git_threads_init();
 
 	parse_opts(&options, &count, argc, argv);
 
@@ -66,7 +66,7 @@ int main (int argc, char** argv)
 	git_index_free(index);
 	git_repository_free(repo);
 
-	git_libgit2_shutdown();
+	git_threads_shutdown();
 
 	return 0;
 }

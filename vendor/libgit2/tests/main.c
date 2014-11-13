@@ -10,7 +10,7 @@ int main(int argc, char *argv[])
 
 	clar_test_init(argc, argv);
 
-	git_libgit2_init();
+	git_threads_init();
 	cl_sandbox_set_search_path_defaults();
 
 	/* Run the test suite */
@@ -19,7 +19,7 @@ int main(int argc, char *argv[])
 	clar_test_shutdown();
 
 	giterr_clear();
-	git_libgit2_shutdown();
+	git_threads_shutdown();
 
 	return res;
 }

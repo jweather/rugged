@@ -8,7 +8,6 @@
 #ifndef INCLUDE_git_git_h__
 #define INCLUDE_git_git_h__
 
-#include "git2/annotated_commit.h"
 #include "git2/attr.h"
 #include "git2/blob.h"
 #include "git2/blame.h"
@@ -40,7 +39,6 @@
 #include "git2/patch.h"
 #include "git2/pathspec.h"
 #include "git2/push.h"
-#include "git2/rebase.h"
 #include "git2/refdb.h"
 #include "git2/reflog.h"
 #include "git2/refs.h"
@@ -56,7 +54,7 @@
 #include "git2/status.h"
 #include "git2/submodule.h"
 #include "git2/tag.h"
-#include "git2/global.h"
+#include "git2/threads.h"
 #include "git2/transport.h"
 #include "git2/tree.h"
 #include "git2/types.h"

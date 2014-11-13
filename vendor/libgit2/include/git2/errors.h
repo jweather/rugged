@@ -43,7 +43,6 @@ typedef enum {
 	GIT_EMODIFIED       = -15,	/**< Reference value does not match expected */
 	GIT_EAUTH           = -16,      /**< Authentication error */
 	GIT_ECERTIFICATE    = -17,      /**< Server certificate is invalid */
-	GIT_EAPPLIED        = -18,	/**< Patch/merge has already been applied */
 
 	GIT_PASSTHROUGH     = -30,	/**< Internal only */
 	GIT_ITEROVER        = -31,	/**< Signals end of iteration with iterator */
@@ -91,7 +90,6 @@ typedef enum {
 	GITERR_CALLBACK,
 	GITERR_CHERRYPICK,
 	GITERR_DESCRIBE,
-	GITERR_REBASE,
 } git_error_t;
 
 /**
